@@ -3,21 +3,22 @@ import sklearn.metrics
 from scipy.sparse import csr_matrix
 
 
-def get_novelty(pred: dict[int, list[int]], ui_mat: csr_matrix, k: int) -> float:
+def get_novelty(pred: dict[int, list[int]], train_ui_mat: csr_matrix,
+                test_in_ui_mat: csr_matrix, k: int) -> float:
     """
     src: https://dl.acm.org/doi/pdf/10.1145/1944339.1944341 (3.2)
     we use cosine distance as the distance measure
     :param pred: the predictions in dictionary format with uid=key & iid=vals
-    :param ui_mat: the user item interaction matrix
+    :param train_ui_mat: the user item interaction matrix
     :param k: the number of items to consider in the predictions
-    :param full_ui_mat: the full user item interaction matrix
+    :param test_in_ui_mat: the user item interaction matrix with test fold-in
     :return: the average novelty
     """
     if k == 0:
         return 0.0
 
     # pairwise cosine distance btwn items, using only training interactions
-    item_dist = sklearn.metrics.pairwise.cosine_distances(ui_mat.T)
+    item_dist = sklearn.metrics.pairwise.cosine_distances(train_ui_mat.T)
 
     total_novelty = 0.0
     for u, items in pred.items():
@@ -26,7 +27,7 @@ def get_novelty(pred: dict[int, list[int]], ui_mat: csr_matrix, k: int) -> float
 
         # L contains the items that a user has interacted with
         # get nonzero indices of the user-item interaction matrix for user u
-        L = np.nonzero(ui_mat[u])[1]
+        L = np.nonzero(test_in_ui_mat[u])[1]
 
         user_novelty = 0.0
         cnt = 0
